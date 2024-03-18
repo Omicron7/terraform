@@ -43,7 +43,7 @@ jobs:
               "operationName":"GetSpaceliftToken"
             }' | jq -r '.data.apiKeyUser.jwt');
           ENCRYPTED=$(echo -n "$JWT" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "$SPACELIFT_API_KEY_SECRET");
-          TOKEN=$(echo -n "$ENCRYPTED" | base64);
+          TOKEN=$(echo -n "$ENCRYPTED" | base64 -w 0);
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
     outputs:
       token: ${{ steps.login.outputs.token }}
