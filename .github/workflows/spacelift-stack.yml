@@ -9,6 +9,12 @@ jobs:
   manage-stacks:
     runs-on: ubuntu-latest
     name: Manage Stacks
+
+    env:
+      SPACELIFT_API_KEY_ENDPOINT: ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}
+      SPACELIFT_API_KEY_ID: ${{ secrets.SPACELIFT_API_KEY_ID }}
+      SPACELIFT_API_KEY_SECRET: ${{ secrets.SPACELIFT_API_KEY_SECRET }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,29 +27,26 @@ jobs:
             **/terraform.tf
 
       - run: |
-          spacectl profile login omicron7
-          jwt=$(spacectl profile export-token)
-          echo "JWT=$jwt" >> "$GITHUB_OUTPUT"
-        id: spacelift
-        env:
-          SPACELIFT_API_KEY_ENDPOINT: https://omicron7.app.spacelift.io
-          SPACELIFT_API_KEY_ID: ${{ secrets.SPACELIFT_API_KEY_ID }}
-          SPACELIFT_API_KEY_SECRET: ${{ secrets.SPACELIFT_API_KEY_SECRET }}
+          spacectl stack list
+          spacectl profile current
 
-      - run: |
-          for file in ${ADDED_FILES}; do
-            echo "$file was added"
-            name=$(dirname $file)
-          done
-
-          curl --request POST \
-            --url $SPACELIFT_API_KEY_ENDPOINT/graphql \
-            --header 'Authorization: Bearer $SPACELIFT_JWT' \
-            --header 'Content-Type: application/json' \
-            --data '{"query":"{ stacks { id name, administrative, createdAt, description }}"}'
-        env:
-          ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
-          SPACELIFT_API_KEY_ENDPOINT: https://mycorp.app.spacelift.io
-          SPACELIFT_API_KEY_ID: ${{ secrets.SPACELIFT_API_KEY_ID }}
-          SPACELIFT_API_KEY_SECRET: ${{ secrets.SPACELIFT_API_KEY_SECRET }}
-          SPACELIFT_JWT: ${{ steps.spacelift.outputs.JWT }}
+#      - run: |
+#          spacectl profile login omicron7
+#          jwt=$(spacectl profile export-token)
+#          echo "JWT=$jwt" >> "$GITHUB_OUTPUT"
+#        id: spacelift
+#
+#      - run: |
+#          for file in ${ADDED_FILES}; do
+#            echo "$file was added"
+#            name=$(dirname $file)
+#          done
+#
+#          curl --request POST \
+#            --url $SPACELIFT_API_KEY_ENDPOINT/graphql \
+#            --header 'Authorization: Bearer $SPACELIFT_JWT' \
+#            --header 'Content-Type: application/json' \
+#            --data '{"query":"{ stacks { id name, administrative, createdAt, description }}"}'
+#        env:
+#          ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
+#          SPACELIFT_JWT: ${{ steps.spacelift.outputs.JWT }}
