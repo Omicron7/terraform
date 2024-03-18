@@ -42,7 +42,8 @@ jobs:
               "variables":{"keyId":"'${SPACELIFT_API_KEY_ID}'","keySecret":"'${SPACELIFT_API_KEY_SECRET}'"},
               "operationName":"GetSpaceliftToken"
             }' | jq -r '.data.apiKeyUser.jwt')
-          echo "TOKEN=$response" >> "$GITHUB_OUTPUT"
+          token=$(echo response | base64)
+          echo "TOKEN=$token" >> "$GITHUB_OUTPUT"
     outputs:
       token: ${{ steps.login.outputs.TOKEN }}
 
@@ -66,7 +67,7 @@ jobs:
             name=$(dirname $file)
             response=$(curl -s --request POST \
               --url ${SPACELIFT_API_KEY_ENDPOINT}graphql \
-              --header "Authorization: Bearer ${SPACELIFT_API_TOKEN}" \
+              --header "Authorization: Bearer $(echo $SPACELIFT_API_TOKEN | base64 -d)" \
               --header 'Content-Type: application/json' \
               --data '{
                 "query":"mutation StackCreate($name: String!) {
