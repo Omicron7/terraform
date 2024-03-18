@@ -1,0 +1,34 @@
+name: Spacelift Stack
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  runs-on: ubuntu-latest
+  name: Create Stack
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: spacelift-io/setup-spacectl@v1
+
+    - uses: tj-actions/changed-files@v43
+      id: changed-files
+      with:
+        files: |
+          **/terraform.tf
+
+    - run: |
+        for file in ${ADDED_FILES}; do
+          echo "$file was added"
+        done
+      env:
+        ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
+
+#    - name: Deploy infrastructure
+#      env:
+#        SPACELIFT_API_KEY_ENDPOINT: https://mycorp.app.spacelift.io
+#        SPACELIFT_API_KEY_ID: ${{ secrets.SPACELIFT_API_KEY_ID }}
+#        SPACELIFT_API_KEY_SECRET: ${{ secrets.SPACELIFT_API_KEY_SECRET }}
+#      run: spacectl stack deploy --id my-infra-stack
