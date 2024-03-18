@@ -34,18 +34,19 @@ jobs:
           SPACELIFT_API_KEY_ID: ${{ secrets.SPACELIFT_API_KEY_ID }}
           SPACELIFT_API_KEY_SECRET: ${{ secrets.SPACELIFT_API_KEY_SECRET }}
         run: |
-          response=$(curl -s --request POST \
+          JWT=$(curl -s --request POST \
             --url ${SPACELIFT_API_KEY_ENDPOINT}graphql \
             --header 'Content-Type: application/json' \
             --data '{
               "query":"mutation GetSpaceliftToken($keyId: ID!, $keySecret: String!) { apiKeyUser(id: $keyId, secret: $keySecret) { id jwt } }",
               "variables":{"keyId":"'${SPACELIFT_API_KEY_ID}'","keySecret":"'${SPACELIFT_API_KEY_SECRET}'"},
               "operationName":"GetSpaceliftToken"
-            }' | jq -r '.data.apiKeyUser.jwt')
-          token=$(echo response | base64)
-          echo "TOKEN=$token" >> "$GITHUB_OUTPUT"
+            }' | jq -r '.data.apiKeyUser.jwt');
+          ENCRYPTED=$(echo -n "$JWT" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "$SPACELIFT_API_KEY_SECRET");
+          TOKEN=$(echo -n "$ENCRYPTED" | base64);
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
     outputs:
-      token: ${{ steps.login.outputs.TOKEN }}
+      token: ${{ steps.login.outputs.token }}
 
   added:
     name: Add Spacelift Stacks
@@ -53,11 +54,13 @@ jobs:
     if: needs.changes.outputs.added_count > 0
     runs-on: ubuntu-latest
 
-    env:
-      SPACELIFT_API_KEY_ENDPOINT: ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}
-      SPACELIFT_API_TOKEN: ${{ needs.token.outputs.token }}
-
     steps:
+      - id: token
+        run: |
+          ENCRYPTED=${{ needs.token.outputs.token }};
+          BINARY=$(echo -n "$ENCRYPTED" | base64 --decode);
+          TOKEN=$(echo -n "$BINARY" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ secrets.SPACELIFT_API_KEY_SECRET }}");
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
       - id: add
         env:
           ADDED_FILES: ${{ needs.changes.outputs.added }}
@@ -66,8 +69,8 @@ jobs:
             echo "$file was added"
             name=$(dirname $file)
             response=$(curl -s --request POST \
-              --url ${SPACELIFT_API_KEY_ENDPOINT}graphql \
-              --header "Authorization: Bearer $(echo $SPACELIFT_API_TOKEN | base64 -d)" \
+              --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
+              --header "Authorization: Bearer ${{ steps.token.outputs.token }})" \
               --header 'Content-Type: application/json' \
               --data '{
                 "query":"mutation StackCreate($name: String!) {
@@ -85,6 +88,6 @@ jobs:
                   ) { id }
                 }",
                 "operationName":"StackCreate",
-                "variables":"{\"name\": \"applications/foo\"}"
+                "variables":"{\"name\": \"'$name'\"}"
               }' | jq -r '.data.stackCreate.id')
           done
