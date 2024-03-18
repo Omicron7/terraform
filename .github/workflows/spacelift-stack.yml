@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: spacelift-io/setup-spacectl@v1
+      - uses: spacelift-io/setup-spacectl@v1.0.0
 
       - uses: tj-actions/changed-files@v43
         id: changed-files
