@@ -6,25 +6,26 @@ on:
       - main
 
 jobs:
-  runs-on: ubuntu-latest
-  name: Create Stack
-  steps:
-    - uses: actions/checkout@v4
+  manage-stacks:
+    runs-on: ubuntu-latest
+    name: Create Stack
+    steps:
+      - uses: actions/checkout@v4
 
-    - uses: spacelift-io/setup-spacectl@v1
+      - uses: spacelift-io/setup-spacectl@v1
 
-    - uses: tj-actions/changed-files@v43
-      id: changed-files
-      with:
-        files: |
-          **/terraform.tf
+      - uses: tj-actions/changed-files@v43
+        id: changed-files
+        with:
+          files: |
+            **/terraform.tf
 
-    - run: |
-        for file in ${ADDED_FILES}; do
-          echo "$file was added"
-        done
-      env:
-        ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
+      - run: |
+          for file in ${ADDED_FILES}; do
+            echo "$file was added"
+          done
+        env:
+          ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
 
 #    - name: Deploy infrastructure
 #      env:
