@@ -21,6 +21,7 @@ jobs:
             **/terraform.tf
 
       - run: |
+          spacectl profile login omicron7
           jwt=$(spacectl profile export-token)
           echo "JWT=$jwt" >> "$GITHUB_OUTPUT"
         id: spacelift
