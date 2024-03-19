@@ -43,12 +43,12 @@ jobs:
         run: |
           set -x;
           for file in ${ADDED_FILES}; do
-            echo "$file was added"
-            name=$(dirname $file)
+            echo "$file was added";
+            name=$(dirname $file);
             response=$(curl --silent \
               --request POST \
               --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
-              --header "Authorization: Bearer ${{ steps.login.outputs.token }})" \
+              --header 'Authorization: Bearer ${{ steps.login.outputs.token }})' \
               --header 'Content-Type: application/json' \
               --data '{
                 "query":"mutation StackCreate($name: String!) {
@@ -67,5 +67,5 @@ jobs:
                 }",
                 "operationName":"StackCreate",
                 "variables":"{\"name\": \"testing\"}"
-              }' | jq -r '.data.stackCreate.id')
+              }');
           done
