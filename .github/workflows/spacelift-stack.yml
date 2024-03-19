@@ -1,0 +1,62 @@
+name: Spacelift Stacks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  manage:
+    name: Manage Spacelift Stacks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check for Terraform Project Changes
+        uses: tj-actions/changed-files@v43
+        id: changes
+        with:
+          files: |
+            **/terraform.tf
+
+      - name: Login to Spacelift
+        id: login
+        if: steps.changes.outputs.added_files_count > 0 || steps.changed.outputs.deleted_files_count > 0
+        run: |
+          JWT=$(curl --silent \
+            --request POST \
+            --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "query":"mutation GetSpaceliftToken($keyId: ID!, $keySecret: String!) { apiKeyUser(id: $keyId, secret: $keySecret) { id jwt } }",
+              "variables":{"keyId":"${{ secrets.SPACELIFT_API_KEY_ID }}","keySecret":"${{ secrets.SPACELIFT_API_KEY_SECRET }}"},
+              "operationName":"GetSpaceliftToken"
+            }' | jq -r '.data.apiKeyUser.jwt');
+          echo "token=$JWT" >> "$GITHUB_OUTPUT"
+
+      - name: Add Stacks
+        if: steps.changes.outputs.added_files_count > 0
+        env:
+          ADDED_FILES: ${{ steps.changes.outputs.added_files }}
+        shell: bash
+        run: |
+          set -x;
+          for file in ${ADDED_FILES}; do
+            echo "$file was added";
+            FOLDER=$(dirname $file);
+            RESPONSE=$(curl --silent \
+              --request POST \
+              --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
+              --header 'Authorization: Bearer ${{ steps.login.outputs.token }}' \
+              --header 'Content-Type: application/json' \
+              --data '{"query":"mutation StackCreate { stackCreate( input: { name: \"'$FOLDER'\", projectRoot: \"'$FOLDER'\", administrative: false, autodeploy: false, repository: \"terraform\", branch: \"main\", space: \"omicron7-01HS1TBZCJ35FSNJ9AC9QTY7WF\", labels: [\"nobackend\"] }, manageState: false) { id } }", "operationName":"StackCreate" }';)
+            STACK_ID=$(echo -n "$RESPONSE" | jq -r '.data.stackCreate.id')
+            echo $STACK_ID
+            curl --silent \
+              --request POST \
+              --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
+              --header 'Authorization: Bearer ${{ steps.login.outputs.token }}' \
+              --header 'Content-Type: application/json' \
+              --data '{"query":"mutation ProposedRun { proposeWithOverrides( stack: \"'$STACK_ID'\", commitSha: \"${{ github.event.pull_request.head.sha }}\", environmentVarsOverrides: [] ) { id } }", "operationName":"ProposedRun" }';
+          done
