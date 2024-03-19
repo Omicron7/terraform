@@ -53,4 +53,10 @@ jobs:
               --data '{"query":"mutation StackCreate { stackCreate( input: { name: \"'$FOLDER'\", projectRoot: \"'$FOLDER'\", administrative: false, autodeploy: false, repository: \"terraform\", branch: \"main\", space: \"omicron7-01HS1TBZCJ35FSNJ9AC9QTY7WF\" }, manageState: true) { id } }", "operationName":"StackCreate" }';)
             STACK_ID=$(echo -n "$RESPONSE" | jq -r '.data.stackCreate.id')
             echo $STACK_ID
+            curl --silent \
+              --request POST \
+              --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
+              --header 'Authorization: Bearer ${{ steps.login.outputs.token }}' \
+              --header 'Content-Type: application/json' \
+              --data '{"query":"mutation ProposedRun { proposeWithOverrides( stack: \"'$STACK_ID'\", commitSha: \"${{ github.event.pull_request.head.sha }}\", environmentVarsOverrides: [] ) { id } }", "operationName":"ProposedRun" }';
           done
