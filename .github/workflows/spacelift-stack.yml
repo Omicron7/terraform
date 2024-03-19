@@ -66,6 +66,6 @@ jobs:
                   ) { id }
                 }",
                 "operationName":"StackCreate",
-                "variables":"{\"name\": \"'$name'\"}"
+                "variables":"{\"name\": \"testing\"}"
               }' | jq -r '.data.stackCreate.id')
           done
