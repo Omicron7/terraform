@@ -50,9 +50,5 @@ jobs:
               --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
               --header 'Authorization: Bearer ${{ steps.login.outputs.token }})' \
               --header 'Content-Type: application/json' \
-              --data '{
-                "query":"mutation StackCreate($name: String!) { stackCreate( input: { name: $name, administrative: false, autodeploy: false, repository: \"terraform\", branch: \"main\", labels: [\"nobackend\"], space: \"omicron7-01HS1TBZCJ35FSNJ9AC9QTY7WF\" }, manageState: false) { id } }",
-                "variables":"{"name":"'$FOLDER'"}",
-                "operationName":"StackCreate"
-              }';
+              --data '{"query":"mutation StackCreate($name: String!) { stackCreate( input: { name: $name, administrative: false, autodeploy: false, repository: \"terraform\", branch: \"main\", labels: [\"nobackend\"], space: \"omicron7-01HS1TBZCJ35FSNJ9AC9QTY7WF\" }, manageState: false) { id } }", "variables":"{\"name\":\"'$FOLDER'\"}", "operationName":"StackCreate" }';
           done
