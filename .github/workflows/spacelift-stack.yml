@@ -39,7 +39,9 @@ jobs:
         if: steps.changes.outputs.added_files_count > 0
         env:
           ADDED_FILES: ${{ steps.changes.outputs.added_files }}
+        shell: bash
         run: |
+          set -x;
           for file in ${ADDED_FILES}; do
             echo "$file was added"
             name=$(dirname $file)
