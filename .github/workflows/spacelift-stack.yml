@@ -6,71 +6,47 @@ on:
       - main
 
 jobs:
-  changes:
-    name: Check for Terraform Project Changes
+  manage:
+    name: Manage Spacelift Stacks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@v43
-        id: changed
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check for Terraform Project Changes
+        uses: tj-actions/changed-files@v43
+        id: changes
         with:
           files: |
             **/terraform.tf
-    outputs:
-      added: ${{ steps.changed.outputs.added_files }}
-      added_count: ${{ steps.changed.outputs.added_files_count }}
-      removed: ${{ steps.changed.outputs.deleted_files }}
-      removed_count: ${{ steps.changed.outputs.deleted_files_count }}
 
-  token:
-    name: Login to Spacelift
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.added_count > 0 || needs.changes.outputs.removed_count > 0
-    steps:
-      - id: login
-        env:
-          SPACELIFT_API_KEY_ENDPOINT: ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}
-          SPACELIFT_API_KEY_ID: ${{ secrets.SPACELIFT_API_KEY_ID }}
-          SPACELIFT_API_KEY_SECRET: ${{ secrets.SPACELIFT_API_KEY_SECRET }}
+      - name: Login to Spacelift
+        id: login
+        if: steps.changes.outputs.added_files_count > 0 || steps.changed.outputs.deleted_files_count > 0
         run: |
-          JWT=$(curl -s --request POST \
-            --url ${SPACELIFT_API_KEY_ENDPOINT}graphql \
+          JWT=$(curl --silent \
+            --request POST \
+            --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
             --header 'Content-Type: application/json' \
             --data '{
               "query":"mutation GetSpaceliftToken($keyId: ID!, $keySecret: String!) { apiKeyUser(id: $keyId, secret: $keySecret) { id jwt } }",
-              "variables":{"keyId":"'${SPACELIFT_API_KEY_ID}'","keySecret":"'${SPACELIFT_API_KEY_SECRET}'"},
+              "variables":{"keyId":"${{ secrets.SPACELIFT_API_KEY_ID }}","keySecret":"${{ secrets.SPACELIFT_API_KEY_SECRET }}"},
               "operationName":"GetSpaceliftToken"
             }' | jq -r '.data.apiKeyUser.jwt');
-          ENCRYPTED=$(echo -n "$JWT" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "$SPACELIFT_API_KEY_SECRET");
-          TOKEN=$(echo -n "$ENCRYPTED" | base64 -w 0);
-          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
-    outputs:
-      token: ${{ steps.login.outputs.token }}
+          echo "token=$JWT" >> "$GITHUB_OUTPUT"
 
-  added:
-    name: Add Spacelift Stacks
-    needs: [changes, token]
-    if: needs.changes.outputs.added_count > 0
-    runs-on: ubuntu-latest
-
-    steps:
-      - id: token
-        run: |
-          ENCRYPTED=${{ needs.token.outputs.token }};
-          BINARY=$(echo -n "$ENCRYPTED" | base64 --decode);
-          TOKEN=$(echo -n "$BINARY" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ secrets.SPACELIFT_API_KEY_SECRET }}");
-          echo "token=$TOKEN" >> $GITHUB_OUTPUT
-      - id: add
+      - name: Add Stacks
+        if: steps.changes.outputs.added_files_count > 0
         env:
-          ADDED_FILES: ${{ needs.changes.outputs.added }}
+          ADDED_FILES: ${{ steps.changes.outputs.added_files }}
         run: |
           for file in ${ADDED_FILES}; do
             echo "$file was added"
             name=$(dirname $file)
-            response=$(curl -s --request POST \
+            response=$(curl --silent \
+              --request POST \
               --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
-              --header "Authorization: Bearer ${{ steps.token.outputs.token }})" \
+              --header "Authorization: Bearer ${{ steps.login.outputs.token }})" \
               --header 'Content-Type: application/json' \
               --data '{
                 "query":"mutation StackCreate($name: String!) {
