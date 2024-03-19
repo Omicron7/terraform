@@ -45,7 +45,7 @@ jobs:
           for file in ${ADDED_FILES}; do
             echo "$file was added";
             name=$(dirname $file);
-            response=$(curl --silent \
+            curl --verbose \
               --request POST \
               --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
               --header 'Authorization: Bearer ${{ steps.login.outputs.token }})' \
@@ -66,6 +66,6 @@ jobs:
                   ) { id }
                 }",
                 "operationName":"StackCreate",
-                "variables":"{\"name\": \"testing\"}"
-              }');
+                "variables":"{\"name\": \"'$name'\"}"
+              }';
           done
