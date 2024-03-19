@@ -33,7 +33,6 @@ jobs:
               "variables":{"keyId":"${{ secrets.SPACELIFT_API_KEY_ID }}","keySecret":"${{ secrets.SPACELIFT_API_KEY_SECRET }}"},
               "operationName":"GetSpaceliftToken"
             }' | jq -r '.data.apiKeyUser.jwt');
-          echo $(echo $JWT | base64 -w 0 )
           echo "token=$JWT" >> "$GITHUB_OUTPUT"
 
       - name: Add Stacks
@@ -45,7 +44,7 @@ jobs:
           set -x;
           for file in ${ADDED_FILES}; do
             echo "$file was added";
-            name=$(dirname $file);
+            FOLDER=$(dirname $file);
             curl --verbose \
               --request POST \
               --url ${{ secrets.SPACELIFT_API_KEY_ENDPOINT }}graphql \
@@ -53,7 +52,7 @@ jobs:
               --header 'Content-Type: application/json' \
               --data '{
                 "query":"mutation StackCreate($name: String!) { stackCreate( input: { name: $name, administrative: false, autodeploy: false, repository: \"terraform\", branch: \"main\", labels: [\"nobackend\"], space: \"omicron7-01HS1TBZCJ35FSNJ9AC9QTY7WF\" }, manageState: false) { id } }",
-                "variables":"{\"name\":\"'$name'\"}",
+                "variables":"{"name":"'$FOLDER'"}",
                 "operationName":"StackCreate"
               }';
           done
