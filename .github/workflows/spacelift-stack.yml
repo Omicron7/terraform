@@ -57,15 +57,15 @@ jobs:
                       name: $name
                       administrative: false
                       autodeploy: false
-                      repository: \"terraform\"
-                      branch: \"main\"
-                      labels: [\"nobackend\"]
-                      space: \"omicron7-01HS1TBZCJ35FSNJ9AC9QTY7WF\"
+                      repository: "terraform"
+                      branch: "main"
+                      labels: ["nobackend"]
+                      space: "omicron7-01HS1TBZCJ35FSNJ9AC9QTY7WF"
                     }
                     manageState: false
                   ) { id }
                 }",
                 "operationName":"StackCreate",
-                "variables":"{\"name\": \"'$name'\"}"
+                "variables":"{"name": "'$name'"}"
               }';
           done
