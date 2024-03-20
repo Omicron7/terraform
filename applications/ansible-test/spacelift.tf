@@ -22,3 +22,10 @@ resource "spacelift_aws_integration_attachment" "aws" {
   read           = true
   write          = true
 }
+
+resource "spacelift_environment_variable" "terraform_state_key" {
+  stack_id = spacelift_stack.ansible.id
+  name     = "TERRAFORM_STATE_KEY"
+  value    = "applications/ansible-test/terraform.tfstate"
+  write_only = true
+}
