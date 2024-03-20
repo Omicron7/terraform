@@ -12,9 +12,10 @@ resource "spacelift_stack" "ansible" {
   ansible {
     playbook = "playbook.yml"
   }
-  repository = "spacelift-ansible"
-  branch     = "main"
-  labels     = ["ansible"]
+  repository   = "spacelift-ansible"
+  branch       = "main"
+  labels       = ["ansible"]
+  runner_image = "public.ecr.aws/y7n4m3q8/spacelift-runner-ansible:latest"
 }
 
 resource "spacelift_aws_integration_attachment" "aws" {
@@ -28,5 +29,5 @@ resource "spacelift_environment_variable" "terraform_state_key" {
   stack_id   = spacelift_stack.ansible.id
   name       = "TERRAFORM_STATE_KEY"
   value      = "applications/ansible-test/terraform.tfstate"
-  write_only = true
+  write_only = false
 }
