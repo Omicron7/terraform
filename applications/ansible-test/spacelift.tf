@@ -1,7 +1,6 @@
 data "spacelift_current_stack" "this" {}
-data "spacelift_stack" "this" {
-  stack_id = data.spacelift_current_stack.this.id
-}
+data "spacelift_stack" "this" { stack_id = data.spacelift_current_stack.this.id }
+data "spacelift_aws_integration" "aws" { name = "spacelift-role" }
 
 # Create Ansible Stack
 resource "spacelift_stack" "ansible" {
@@ -15,4 +14,11 @@ resource "spacelift_stack" "ansible" {
   }
   repository = "spacelift-ansible"
   branch     = "main"
+}
+
+resource "spacelift_aws_integration_attachment" "aws" {
+  integration_id = data.spacelift_aws_integration.aws.id
+  stack_id       = spacelift_stack.ansible.id
+  read           = true
+  write          = true
 }
