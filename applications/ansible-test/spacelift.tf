@@ -6,6 +6,7 @@ data "spacelift_stack" "this" {
 # Create Ansible Stack
 resource "spacelift_stack" "ansible" {
   name           = "${data.spacelift_stack.this.name} Ansible"
+  space_id       = data.spacelift_stack.this.space_id
   administrative = false
   autodeploy     = false
   project_root   = "/"
