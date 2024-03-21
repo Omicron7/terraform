@@ -4,15 +4,17 @@ data "spacelift_aws_integration" "aws" { name = "spacelift-role" }
 
 
 resource "spacelift_stack" "this" {
-  name           = data.spacelift_stack.this.name
-  space_id       = data.spacelift_stack.this.space_id
-  project_root   = data.spacelift_stack.this.project_root
-  manage_state   = false
-  administrative = true
-  autodeploy     = false
-  repository     = "terraform"
-  branch         = "main"
-  labels         = ["nobackend", "feature:add_plan_pr_comment", "terraform"]
+  name                    = data.spacelift_stack.this.name
+  space_id                = data.spacelift_stack.this.space_id
+  project_root            = data.spacelift_stack.this.project_root
+  manage_state            = false
+  administrative          = true
+  autodeploy              = false
+  repository              = "terraform"
+  branch                  = "main"
+  terraform_workflow_tool = "OPEN_TOFU"
+  terraform_version       = "~>1.6.2"
+  labels                  = ["nobackend", "feature:add_plan_pr_comment", "terraform"]
 }
 
 import {
