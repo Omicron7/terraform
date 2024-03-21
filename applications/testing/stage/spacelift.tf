@@ -50,3 +50,8 @@ resource "spacelift_environment_variable" "terraform_state_key" {
   value      = "${data.spacelift_stack.this.project_root}/terraform.tfstate"
   write_only = false
 }
+
+resource "spacelift_stack_dependency" "ansible" {
+  stack_id            = spacelift_stack.ansible.id
+  depends_on_stack_id = spacelift_stack.this.id
+}
