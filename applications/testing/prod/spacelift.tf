@@ -47,6 +47,11 @@ resource "spacelift_aws_integration_attachment" "aws" {
 resource "spacelift_environment_variable" "terraform_state_key" {
   stack_id   = spacelift_stack.ansible.id
   name       = "TERRAFORM_STATE_KEY"
-  value      = "${data.spacelift_stack.this.project_root}/terraform.tfstate"
+  value      = "spacelift/${data.spacelift_stack.this.project_root}/terraform.tfstate"
   write_only = false
+}
+
+resource "spacelift_stack_dependency" "ansible" {
+  stack_id            = spacelift_stack.ansible.id
+  depends_on_stack_id = spacelift_stack.this.id
 }
