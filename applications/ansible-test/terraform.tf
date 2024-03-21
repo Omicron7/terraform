@@ -15,6 +15,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.30"
     }
+    spacelift = {
+      source = "spacelift-io/spacelift"
+      version = "1.10.0"
+    }
   }
 }
 
