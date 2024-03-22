@@ -14,12 +14,16 @@ resource "spacelift_stack" "this" {
   branch                  = "main"
   terraform_workflow_tool = "OPEN_TOFU"
   terraform_version       = "~>1.6.2"
-  labels                  = ["nobackend", "feature:add_plan_pr_comment", "terraform"]
+  labels                  = ["nobackend", "feature:add_plan_pr_comment", "terraform", "terraform+ansible"]
 }
 
 import {
   id = data.spacelift_current_stack.this.id
   to = spacelift_stack.this
+}
+
+locals {
+  ansible_branch = "stage-testing"
 }
 
 # Create Ansible Stack
@@ -32,13 +36,9 @@ resource "spacelift_stack" "ansible" {
     playbook = "playbook.yml"
   }
   repository   = "spacelift-ansible"
-  branch       = "main"
-  labels       = ["ansible"]
+  branch       = local.ansible_branch
+  labels       = ["ansible", "depends-on:${spacelift_stack.this.id}"]
   runner_image = "public.ecr.aws/y7n4m3q8/spacelift-runner-ansible:latest"
-}
-
-locals {
-  ansible_branch = "stage-testing"
 }
 
 resource "spacelift_aws_integration_attachment" "aws" {
@@ -53,16 +53,4 @@ resource "spacelift_environment_variable" "terraform_state_key" {
   name       = "TERRAFORM_STATE_KEY"
   value      = "spacelift/${data.spacelift_stack.this.project_root}/terraform.tfstate"
   write_only = false
-}
-
-resource "spacelift_environment_variable" "ansible_branch" {
-  stack_id   = spacelift_stack.ansible.id
-  name       = "ANSIBLE_REPO_BRANCH"
-  value      = local.ansible_branch
-  write_only = false
-}
-
-resource "spacelift_stack_dependency" "ansible" {
-  stack_id            = spacelift_stack.ansible.id
-  depends_on_stack_id = spacelift_stack.this.id
 }
