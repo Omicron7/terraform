@@ -32,7 +32,7 @@ resource "spacelift_stack" "ansible" {
     playbook = "playbook.yml"
   }
   repository   = "spacelift-ansible"
-  branch       = "main"
+  branch       = "stage-testing"
   labels       = ["ansible"]
   runner_image = "public.ecr.aws/y7n4m3q8/spacelift-runner-ansible:latest"
 }
