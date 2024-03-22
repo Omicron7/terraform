@@ -9,7 +9,7 @@ resource "spacelift_stack" "this" {
   project_root            = data.spacelift_stack.this.project_root
   manage_state            = false
   administrative          = true
-  autodeploy              = false
+  autodeploy              = true
   repository              = "terraform"
   branch                  = "main"
   terraform_workflow_tool = "OPEN_TOFU"
