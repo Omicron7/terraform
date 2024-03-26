@@ -9,12 +9,12 @@ resource "spacelift_stack" "this" {
   project_root            = data.spacelift_stack.this.project_root
   manage_state            = false
   administrative          = true
-  autodeploy              = false
+  autodeploy              = true
   repository              = "terraform"
   branch                  = "main"
   terraform_workflow_tool = "OPEN_TOFU"
   terraform_version       = "~>1.6.2"
-  labels                  = ["nobackend", "feature:add_plan_pr_comment", "terraform"]
+  labels                  = ["nobackend", "feature:add_plan_pr_comment", "terraform", "terraform+ansible"]
 }
 
 import {
@@ -33,7 +33,7 @@ resource "spacelift_stack" "ansible" {
   }
   repository   = "spacelift-ansible"
   branch       = "stage-testing"
-  labels       = ["ansible"]
+  labels       = ["ansible", "depends-on:${spacelift_stack.this.id}"]
   runner_image = "public.ecr.aws/y7n4m3q8/spacelift-runner-ansible:latest"
 }
 
@@ -51,7 +51,3 @@ resource "spacelift_environment_variable" "terraform_state_key" {
   write_only = false
 }
 
-resource "spacelift_stack_dependency" "ansible" {
-  stack_id            = spacelift_stack.ansible.id
-  depends_on_stack_id = spacelift_stack.this.id
-}
