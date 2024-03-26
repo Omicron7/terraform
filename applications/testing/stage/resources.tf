@@ -14,6 +14,14 @@ resource "ansible_host" "app2" {
   }
 }
 
+resource "ansible_host" "app3" {
+  name   = "app3"
+  groups = ["stage"]
+  variables = {
+    ansible_host = "127.0.0.1"
+  }
+}
+
 resource "ansible_group" "linux" {
   name = "stage"
   variables = {
